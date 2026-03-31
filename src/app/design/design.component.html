@@ -1,0 +1,228 @@
+<div class="design-screen">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-items">
+      @for (item of sidebarItems; track item.kind) {
+        <div class="sidebar-item" fExternalItem [fData]="item.kind">
+          <span class="si-col si-col--shape">
+            <svg class="si-shape-svg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              @switch (item.type) {
+                @case ('Event')  { <ellipse cx="16" cy="16" rx="13" ry="13" /> }
+                @case ('Gateway') { <polygon points="16,2 30,16 16,30 2,16" /> }
+                @case ('Human') { <path [attr.d]="item.icon" /> }
+                @default          { <rect x="2" y="8" width="28" height="16" rx="3" /> }
+              }
+            </svg>
+          </span>
+          <span class="si-col si-col--text">
+            <!-- @if (item.iconType === 'svg') {
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="flex-shrink:0">
+                <path [attr.d]="item.icon" />
+              </svg>
+            } -->
+            <span class="si-label">{{ item.name }}</span>
+          </span>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Canvas area -->
+  <div class="canvas-area">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="btn" (click)="fitToScreen()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+        Fit
+      </button>
+      <button class="btn" (click)="resetView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+        Reset
+      </button>
+      <button class="btn" (click)="onZoomIn()">+</button>
+      <button class="btn" (click)="onZoomOut()">-</button>
+      <div class="toolbar-divider"></div>
+      <button class="btn" (click)="undo()" [disabled]="!canUndo()" title="Undo (Ctrl+Z)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+        </svg>
+        Undo
+      </button>
+      <button class="btn" (click)="redo()" [disabled]="!canRedo()" title="Redo (Ctrl+Y)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>
+        </svg>
+        Redo
+      </button>
+      <div class="toolbar-divider"></div>
+      <button class="btn btn--accent" (click)="exportJson()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+      <label class="btn btn--accent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="17"/>
+        </svg>
+        Import
+        <input type="file" accept=".json,application/json" class="file-input" (change)="importJson($event)">
+      </label>
+      <button class="btn btn--save" (click)="openSaveModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Save
+      </button>
+      <span class="toolbar-hint">Drag items from sidebar · Connect by dragging output → input</span>
+    </div>
+
+    <!-- Flow -->
+    <f-flow fDraggable class="flow"
+      (fLoaded)="onLoaded()"
+      (fCreateNode)="onCreateNode($event)"
+      (fCreateConnection)="onCreateConnection($event)"
+    >
+      <f-background><f-rect-pattern /></f-background>
+
+      <f-canvas fZoom>
+        <f-connection-for-create />
+
+        @for (conn of connections(); track conn.id) {
+          <f-connection [fOutputId]="conn.source" [fInputId]="conn.target" />
+        }
+
+        @for (node of nodes(); track node.id) {
+          <div
+            fNode fDragHandle
+            [fNodeId]="node.id"
+            [fNodePosition]="node.position"
+            (fNodePositionChange)="node.position = $event"
+            class="node node--{{ node.shape }} node--{{ node.kind }}"
+            (click)="openNodeMenu(node.id, $event)"
+          >
+            <div fNodeInput [fInputId]="node.id + '-in'" fInputConnectableSide="left" class="connector connector--in"></div>
+
+            <div class="node-body">
+              @switch (node.shape) {
+
+                @case ('circle') {
+                  <div class="shape shape--circle shape--{{ node.kind }}">
+                    @if (node.labelEditable) {
+                      <input class="node-label-input node-label-input--circle" fDragBlocker
+                        [value]="node.label"
+                        (click)="focusLabel(node.id, $event)"
+                        (blur)="commitLabel(node.id, $any($event.target).value)"
+                        (keydown)="onLabelKeydown(node.id, $any($event.target).value, $event)"
+                        [class.active]="editingLabelId() === node.id"
+                      />
+                    } @else {
+                      <span class="node-label-static node-label-static--circle">{{ node.label }}</span>
+                    }
+                  </div>
+                }
+
+                @case ('diamond') {
+                  <div class="shape shape--diamond-wrap">
+                    <div class="shape--diamond shape--{{ node.kind }}">
+                      @if (node.labelEditable) {
+                        <input class="node-label-input node-label-input--diamond" fDragBlocker
+                          [value]="node.label"
+                          (click)="focusLabel(node.id, $event)"
+                          (blur)="commitLabel(node.id, $any($event.target).value)"
+                          (keydown)="onLabelKeydown(node.id, $any($event.target).value, $event)"
+                          [class.active]="editingLabelId() === node.id"
+                        />
+                      } @else {
+                        <span class="node-label-static node-label-static--diamond">{{ node.label }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @default {
+                  <div class="shape shape--rect shape--{{ node.kind }}">
+                    <span class="node-rect__icon">
+                      @if (node.kind === 'gateway') {
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2c1.07 0 2.48.8 3.72 3H8.28C9.52 6.8 10.93 4 12 4zm-4.27 3h8.54c.44 1.02.73 2.17.73 3H7c0-.83.29-1.98.73-3zM4.07 10h2.96C7 10.66 7 11.33 7 12s0 1.34.03 2H4.07A8 8 0 0 1 4 12c0-.69.03-1.36.07-2zm.52 6h2.55c.3 1.1.72 2.1 1.22 2.93A8.03 8.03 0 0 1 4.59 16zm3.69 0h7.44c-.5 1.5-1.2 2.6-1.72 3H9.99c-.52-.4-1.22-1.5-1.71-3zm8.58 0h2.55a8.03 8.03 0 0 1-3.77 2.93c.5-.83.92-1.83 1.22-2.93zm2.11-2h-2.96C16 13.34 16 12.67 16 12s0-1.34-.03-2h2.96c.04.64.07 1.31.07 2s-.03 1.36-.07 2zm-3.96 0H9c-.03-.66-.03-1.33 0-2h5.01c.02.67.02 1.34-.01 2z"/>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                        </svg>
+                      }
+                    </span>
+                    @if (node.labelEditable) {
+                      <input class="node-label-input" fDragBlocker
+                        [value]="node.label"
+                        (click)="focusLabel(node.id, $event)"
+                        (blur)="commitLabel(node.id, $any($event.target).value)"
+                        (keydown)="onLabelKeydown(node.id, $any($event.target).value, $event)"
+                        [class.active]="editingLabelId() === node.id"
+                      />
+                    } @else {
+                      <span class="node-label-static">{{ node.label }}</span>
+                    }
+                  </div>
+                }
+
+              }
+            </div>
+
+            <div fNodeOutput [fOutputId]="node.id + '-out'" [fOutputMultiple]="true" fOutputConnectableSide="right" class="connector connector--out"></div>
+            <button class="node-del" fDragBlocker (click)="deleteNode(node.id)" title="Delete">✕</button>
+
+            @if (activeNodeId() === node.id) {
+              <div class="node-menu" fDragBlocker (click)="$event.stopPropagation()">
+                <div class="node_menu__buttons">
+                  @for (opt of shapeOptions; track opt.kind) {
+                    <button class="node-menu__item" (click)="addConnectedNode(node.id, opt.kind)" [title]="opt.name">
+                      <span class="node-menu__icon node-menu__icon--{{ opt.shape }}">
+                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                          @switch (opt.type) {
+                             @case ('Event')  { <ellipse cx="16" cy="16" rx="13" ry="13" /> }
+                              @case ('Gateway') { <polygon points="16,2 30,16 16,30 2,16" /> }
+                              @case ('Human') { <path [attr.d]="opt.icon" /> }
+                              @default          { <rect x="2" y="8" width="28" height="16" rx="3" /> }
+                          }
+                        </svg>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </f-canvas>
+
+      <f-selection-area />
+    </f-flow>
+
+    @if (nodes().length === 0) {
+      <div class="empty-state">
+        <div class="empty-state__arrow">⬅</div>
+        <p>Drag an item from the sidebar to add more nodes</p>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showSaveModal()) {
+  <app-save-workflow-modal
+    [nodes]="nodes()"
+    [connections]="connections()"
+    (closed)="showSaveModal.set(false)"
+    (saved)="onWorkflowSaved()"
+  />
+}

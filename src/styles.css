@@ -1,0 +1,63 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Foblex connection styles (must be global — not component-scoped) ── */
+.f-connection .f-connection-drag-handle {
+  fill: transparent !important;
+}
+.f-connection .f-connection-selection {
+  fill: none !important;
+}
+.f-connection .f-connection-path {
+  fill: none !important;
+  stroke: rgba(60, 60, 67, 0.78) !important;
+  stroke-width: 2 !important;
+}
+.f-connection .f-connection-text,
+.f-connection .f-connection-center {
+  fill: rgba(60, 60, 67, 0.78) !important;
+  color: rgba(60, 60, 67, 0.78) !important;
+}
+.f-connection.f-snap-connection .f-connection-path {
+  stroke: rgba(60, 60, 67, 0.78) !important;
+}
+.f-connection.f-selected .f-connection-path {
+  stroke: #3451b2 !important;
+}
+.connection-marker circle,
+.connection-marker rect,
+.connection-marker path {
+  fill: rgba(60, 60, 67, 0.78) !important;
+}
+.f-connection.f-selected .connection-marker circle,
+.f-connection.f-selected .connection-marker rect,
+.f-connection.f-selected .connection-marker path {
+  fill: #3451b2 !important;
+}
+
+/* Fablex minmap styling */
+.f-minimap {
+  background-color: #fff;
+  bottom: 16px;
+  right: 16px;
+  width: 120px;
+  height: 120px;
+}
+.f-minimap .f-minimap-node {
+  fill: rgba(60, 60, 67);
+}
+.f-minimap .f-minimap-node.f-selected {
+  fill: #3451b2;
+}
+.f-minimap .f-minimap-view {
+  fill: rgba(100, 108, 255, 0.14) !important;
+}

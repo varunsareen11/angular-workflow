@@ -1,59 +1,73 @@
-# AngularApp
+# Angular Workflow Designer
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.5.
+A visual workflow builder built with Angular 21 and [Foblex Flow](https://flow.foblex.com/). Drag and drop nodes onto a canvas, connect them, and export or save your workflow.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- Drag-and-drop node palette with 5 node types:
+  - Start Event
+  - End Event
+  - Gateway
+  - Human in Loop
+  - Define Scope
+- Draw connections between nodes
+- Inline label editing on supported nodes
+- Add connected nodes directly from a node's context menu
+- Undo / Redo (Ctrl+Z / Ctrl+Y or Cmd+Z / Cmd+Y)
+- Zoom in / out and fit-to-screen controls
+- Export canvas to JSON
+- Import canvas from JSON
+- Save workflow via modal (posts to `/api/workflows`)
 
-```bash
-ng serve
-```
+## Tech Stack
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- Angular 21 (standalone components, signals)
+- [@foblex/flow](https://www.npmjs.com/package/@foblex/flow) for the canvas engine
+- Angular HttpClient for API integration
+- TypeScript 5.9
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Getting Started
 
 ```bash
-ng build
+npm install
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+App runs at `http://localhost:4200` and redirects to `/design`.
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Build
 
 ```bash
-ng test
+npm run build
 ```
 
-## Running end-to-end tests
+Output is placed in `dist/`.
 
-For end-to-end (e2e) testing, run:
+## Project Structure
 
-```bash
-ng e2e
+```
+src/app/
+├── design/
+│   ├── design.component.ts       # Main canvas + toolbar logic
+│   ├── design.component.html
+│   ├── design.component.css
+│   └── save-workflow-modal/      # Modal for naming & saving a workflow
+├── app.routes.ts
+├── app.config.ts
+└── app.ts
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## API
 
-## Additional Resources
+The save modal POSTs the following payload to `/api/workflows`:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```json
+{
+  "name": "string",
+  "description": "string",
+  "nodes": [...],
+  "connections": [...]
+}
+```
+
+Replace the endpoint in `save-workflow-modal.component.ts` with your actual backend URL.
